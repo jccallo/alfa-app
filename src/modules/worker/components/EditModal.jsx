@@ -1,148 +1,163 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useImageUpload, useOccupations, useWorkers, useWorksites } from '../hooks'
-import { Button, Col, Form, Modal, Row } from 'react-bootstrap'
+import { Button, Col, Form, Image, Modal, Row } from 'react-bootstrap'
 import { InvalidFeedback } from '../../../lib/easy'
+import { useIndexStore } from '../store'
+import { useForm } from '../../../hooks'
+import { API_URL } from '../../../constants'
+import toast from 'react-hot-toast'
+import { useHttpStore } from '../../../store'
 
-export const EditModal = ({ id, show, handleClose }) => {
-   const { occupations, getOccupations } = useOccupations()
-   const { worksites, getWorksites } = useWorksites()
-   const { editWorker, getWorker, worker, errors, editForm, handleFileChange, setSelectedFile } = useWorkers()
+const initialForm = {
+   codigo: '',
+   apellidos_nombres: '',
+   dni: '',
+   fecha_nacimiento: '',
+   fecha_ingreso: '',
+   occupation_id: '',
+   worksite_id: '',
+}
 
-   const handleSubmit = async (event) => {
-      event.preventDefault();
-      await editWorker(id, editForm)
-   };
+export const EditModal = ({ openEditModal, setOpenEditModal, executeFunction }) => {
+   // states
+   const [dataIsUpdated, setDataIsUpdated] = useState(false)
+   
+   // stores
+   const { tryCatch, validationErrors, errorMessage, resetErrors }          = useHttpStore()
+   const { currentWorkerId, occupationsState, worksitesState, workerState, resetState } = useIndexStore()
+   
+   // hooks
+   const { preview, selectedFile, setSelectedFile, handleFileChange } = useImageUpload()
+   const { getAllOccupations }                               = useOccupations()
+   const { getAllWorksites }                                 = useWorksites()
+   const { editWorker, getWorkerById }                       = useWorkers()
 
-   const execute = async () => {
-      await getOccupations()
-      await getWorksites()
-      await getWorker(id)
+   // forms
+   const { formState: editForm, onUpdateForm, onInputChange } = useForm(initialForm)
+
+   // memos
+   const imgUrl = useMemo(() => {
+      if (selectedFile) return preview
+      else if (workerState.foto) return `${API_URL}/images/avatars/${workerState.foto}`
+      else return '/src/assets/img/no-avatar.png'
+   }, [workerState.foto, preview])
+
+   // promises
+   const handle = tryCatch(async () => {
+      await editWorker(currentWorkerId, editForm, selectedFile)
+      setSelectedFile(null)
+      setDataIsUpdated(true)
+      toast.success('Trabajor editado correctamente')
+   })
+
+   const execute = tryCatch(async () => {
+      await getAllOccupations()
+      await getAllWorksites()
+      await getWorkerById(currentWorkerId)
+   })
+
+   // functions
+   const handleClose = () => {
+      if (dataIsUpdated) executeFunction()
+      resetState()
+      resetErrors()
+      setOpenEditModal(false)
    }
 
+   // effects
    useEffect(() => {
-      execute()
-   }, [id])
+      if (openEditModal && currentWorkerId > 0) {
+         execute()
+      }
+   }, [currentWorkerId])
 
    useEffect(() => {
-      if (worker) {
-         editForm.onUpdateForm({
-            id               : worker.id,
-            codigo           : worker.codigo,
-            apellidos_nombres: worker.apellidos_nombres,
-            dni              : worker.dni,
-            fecha_nacimiento : worker.fecha_nacimiento,
-            fecha_ingreso    : worker.fecha_ingreso,
-            occupation_id    : worker.occupation.id,
-            worksite_id      : worker.worksite.id,
+      if (openEditModal) toast.success(errorMessage)
+   }, [errorMessage])
+
+   useEffect(() => {
+      if (workerState) {
+         onUpdateForm({
+            id               : workerState.id,
+            codigo           : workerState.codigo,
+            apellidos_nombres: workerState.apellidos_nombres,
+            dni              : workerState.dni,
+            fecha_nacimiento : workerState.fecha_nacimiento,
+            fecha_ingreso    : workerState.fecha_ingreso,
+            occupation_id    : workerState.occupation.id,
+            worksite_id      : workerState.worksite.id,
          })
       }
-   }, [worker])
+   }, [workerState])
 
    return (
-      <Modal
-         size="lg"
-         show={show}
-         onHide={handleClose}
-         backdrop="static"
-         keyboard={false}
-      >
+      <Modal size="lg" show={openEditModal} onHide={handleClose} backdrop="static" keyboard={false}>
          <Modal.Header closeButton>
-            <Modal.Title>Editar Trabajador #{id}</Modal.Title>
+            <Modal.Title>Editar Trabajador #{currentWorkerId}</Modal.Title>
          </Modal.Header>
          <Modal.Body>
-            <Form onSubmit={handleSubmit}>
+            <div className="d-flex justify-content-center mb-4">
+               <Image src={imgUrl} roundedCircle style={{ width: '150px', height: '150px' }} />
+            </div>
+            <Form>
                <Row>
                   <Form.Group as={Col} xs={12} sm={6} controlId="formCodigo" className="mb-3">
                      <Form.Label>Código</Form.Label>
-                     <Form.Control
-                        type="text"
-                        name="codigo"
-                        value={editForm.codigo}
-                        onChange={editForm.onInputChange}
-                     />
-                     {errors.codigo && <InvalidFeedback>{errors.codigo}</InvalidFeedback>}
+                     <Form.Control type="text" name="codigo" value={editForm.codigo} onChange={onInputChange} />
+                     {validationErrors && <InvalidFeedback>{validationErrors.codigo}</InvalidFeedback>}
                   </Form.Group>
 
                   <Form.Group as={Col} xs={12} sm={6} controlId="formDni" className="mb-3">
                      <Form.Label>DNI</Form.Label>
-                     <Form.Control
-                        type="text"
-                        name="dni"
-                        value={editForm.dni}
-                        onChange={editForm.onInputChange}
-                     />
-                     {errors.dni && <InvalidFeedback>{errors.dni}</InvalidFeedback>}
+                     <Form.Control type="text" name="dni" value={editForm.dni} onChange={onInputChange} />
+                     {validationErrors && <InvalidFeedback>{validationErrors.dni}</InvalidFeedback>}
                   </Form.Group>
                </Row>
 
                <Form.Group controlId="formApellidosNombres" className="mb-3">
                   <Form.Label>Apellidos y Nombres</Form.Label>
-                  <Form.Control
-                     type="text"
-                     name="apellidos_nombres"
-                     value={editForm.apellidos_nombres}
-                     onChange={editForm.onInputChange}
-                  />
-                  {errors.apellidos_nombres && <InvalidFeedback>{errors.apellidos_nombres}</InvalidFeedback>}
+                  <Form.Control type="text" name="apellidos_nombres" value={editForm.apellidos_nombres} onChange={onInputChange} />
+                  {validationErrors && <InvalidFeedback>{validationErrors.apellidos_nombres}</InvalidFeedback>}
                </Form.Group>
 
                <Row>
                   <Form.Group as={Col} xs={12} sm={6} controlId="formFechaNacimiento" className="mb-3">
                      <Form.Label>Fecha de Nacimiento</Form.Label>
-                     <Form.Control
-                        type="date"
-                        name="fecha_nacimiento"
-                        value={editForm.fecha_nacimiento}
-                        onChange={editForm.onInputChange}
-                     />
-                     {errors.fecha_nacimiento && <InvalidFeedback>{errors.fecha_nacimiento}</InvalidFeedback>}
+                     <Form.Control type="date" name="fecha_nacimiento" value={editForm.fecha_nacimiento} onChange={onInputChange} />
+                     {validationErrors && <InvalidFeedback>{validationErrors.fecha_nacimiento}</InvalidFeedback>}
                   </Form.Group>
 
                   <Form.Group as={Col} xs={12} sm={6} controlId="formFechaIngreso" className="mb-3">
                      <Form.Label>Fecha de Ingreso</Form.Label>
-                     <Form.Control
-                        type="date"
-                        name="fecha_ingreso"
-                        value={editForm.fecha_ingreso}
-                        onChange={editForm.onInputChange}
-                     />
-                     {errors.fecha_ingreso && <InvalidFeedback>{errors.fecha_ingreso}</InvalidFeedback>}
+                     <Form.Control type="date" name="fecha_ingreso" value={editForm.fecha_ingreso} onChange={onInputChange} />
+                     {validationErrors && <InvalidFeedback>{validationErrors.fecha_ingreso}</InvalidFeedback>}
                   </Form.Group>
                </Row>
 
                <Form.Group controlId="formOccupationId" className="mb-3">
                   <Form.Label>Ocupación</Form.Label>
-                  <Form.Select
-                     name="occupation_id"
-                     value={editForm.occupation_id}
-                     onChange={editForm.onInputChange}
-                     required
-                  >
+                  <Form.Select name="occupation_id" value={editForm.occupation_id} onChange={onInputChange} required>
                      <option value="">Seleccionar</option>
-                     {occupations.map((occupation) => (
+                     {occupationsState.map((occupation) => (
                         <option key={occupation.id} value={occupation.id}>
                            {occupation.nombre}
                         </option>
                      ))}
                   </Form.Select>
-                  {errors.occupation_id && <InvalidFeedback>{errors.occupation_id}</InvalidFeedback>}
+                  {validationErrors && <InvalidFeedback>{validationErrors.occupation_id}</InvalidFeedback>}
                </Form.Group>
 
                <Form.Group controlId="formWorksiteId" className="mb-3">
                   <Form.Label>Trabajo</Form.Label>
-                  <Form.Select
-                     name="worksite_id"
-                     value={editForm.worksite_id}
-                     onChange={editForm.onInputChange}
-                  >
-                     <option value="">Seleccionar</option>worksites
-                     {worksites.map((worksite) => (
+                  <Form.Select name="worksite_id" value={editForm.worksite_id} onChange={onInputChange}>
+                     <option value="">Seleccionar</option>
+                     {worksitesState.map((worksite) => (
                         <option key={worksite.id} value={worksite.id}>
                            {worksite.nombre}
                         </option>
                      ))}
                   </Form.Select>
-                  {errors.worksite_id && <InvalidFeedback>{errors.worksite_id}</InvalidFeedback>}
+                  {validationErrors && <InvalidFeedback>{validationErrors.worksite_id}</InvalidFeedback>}
                </Form.Group>
 
                <Form.Group className="mb-3">
@@ -155,8 +170,13 @@ export const EditModal = ({ id, show, handleClose }) => {
             <Button variant="secondary" onClick={handleClose}>
                Cancelar
             </Button>
-            <Button variant="primary" onClick={handleSubmit}>Guardar</Button>
+            <Button variant="primary" onClick={handle}>
+               Guardar
+            </Button>
          </Modal.Footer>
+         {/* <pre>{JSON.stringify({ validationErrors, errorMessage }, null, 2)}</pre>
+         <pre>{JSON.stringify(editForm, null, 2)}</pre>
+         <pre>{JSON.stringify(occupationsState, null, 2)}</pre> */}
       </Modal>
    )
 }

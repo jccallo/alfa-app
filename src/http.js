@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { API_URL } from './constants'
 import { useHttpStore } from './store'
+import toast from 'react-hot-toast'
 
 const createApiInstance = (baseURL) => {
    const instance = axios.create({
@@ -31,6 +32,22 @@ const createApiInstance = (baseURL) => {
    )
 
    return instance
+}
+
+const trayCatch = async ({ onFetch, onSuccess, onError, onFinally, params }) => {
+   const { startFetching, stopFetching } = useHttpStore.getState()
+
+   try {
+      startFetching()
+      const result = await Promise.resolve(onFetch(params))
+      if (onSuccess) onSuccess(result)
+   } catch (err) {
+      if (onError) onError(err)
+      else toast.error('Error en la peticion')
+   } finally {
+      stopFetching()
+      if (onFinally) onFinally()
+   }
 }
 
 export const Api = createApiInstance(API_URL)

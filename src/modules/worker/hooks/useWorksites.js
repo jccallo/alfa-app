@@ -1,21 +1,14 @@
-import { useState } from 'react'
-import toast from 'react-hot-toast'
-import { Api } from '../../../http'
+import { worksiteService } from '../../../services'
+import { useIndexStore } from '../store'
 
 export const useWorksites = () => {
-   const [worksites, setWorksites] = useState([])
+   const { setWorksitesState } = useIndexStore()
 
-   const getWorksites = async () => {
-      try {
-         const response = await Api.get(`/worksites?page=1&per_page=1000`)
-         setWorksites(response.data.data)
-      } catch (err) {
-         toast.error('Error al obtener zonas')
-      }
+   const getAllWorksites = async () => {
+      await worksiteService.index({ page: 1, per_page: 1000 }).then((response) => setWorksitesState(response.data.data))
    }
 
    return {
-      worksites,
-      getWorksites,
+      getAllWorksites,
    }
 }

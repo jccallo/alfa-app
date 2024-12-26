@@ -16,6 +16,7 @@ function App() {
    useEffect(() => {
       if (isFetching) ref.current?.continuousStart()
       else ref.current?.complete()
+   console.log('isFetching', isFetching)
    }, [isFetching])
 
    return (

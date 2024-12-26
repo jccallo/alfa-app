@@ -1,75 +1,66 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { Card } from 'react-bootstrap'
 import { TableFooter, TableHeader, TableCol, TableContent, TableRow, useTable, Popconfirm } from '../../../lib/easy'
-import { Api } from '../../../http'
 import { ContentLayout } from '../../../layouts'
 import { EditModal, StoreModal, ViewModal } from '../components'
 import { workerService } from '../../../services'
+import { useIndexStore } from '../store'
+import { useHttpStore } from '../../../store'
 
 export const IndexPage = () => {
-   const [showDeleteModal, setShowDeleteModal] = useState(false)
-   const [id, setId] = useState(0)
-   const [type, setType] = useState('')
-   const [show, setShow] = useState(false)
+   const { http, tryCatch, errorMessage } = useHttpStore()
 
-   const handleShow = () => setShow(true)
+   const { setCurrentWorkerId, currentWorkerId } = useIndexStore()
+   const [openViewModal, setOpenViewModal] = useState(false)
+   const [openEditModal, setOpenEditModal] = useState(false)
+   const [openStoreModal, setOpenStoreModal] = useState(false)
+   const [showDeleteModal, setShowDeleteModal] = useState(false)
+
    const { data, pager, page, perPage, query, setData, setPager, setPage, setPerPage, setQuery, executeFunction } = useTable({
-      onFetch: async (page, perPage, query) => await Api.get(`/workers?page=${page}&per_page=${perPage}&query=${query}`),
+      onFetch: async (page, perPage, query) => await http.get(`/workers?page=${page}&per_page=${perPage}&query=${query}`),
       onSuccess: (response) => {
          setData(response.data.data)
          setPager(response.data.pager)
       },
-      onError: (error) => {
-         toast.error(error.message)
+      onError: () => {
+         toast.error('Error al listar los trabajadores')
       },
    })
 
-   const columns = ['ID', 'Codigo', 'Apellidos y Nombres', 'DNI', 'Edad']
+   const columns = ['ID', 'Codigo', 'Apellidos y Nombres', 'DNI', 'Edad', 'Acciones']
 
    const onView = (id) => {
-      setId(id)
-      setType('view')
-      handleShow()
+      setCurrentWorkerId(id)
+      setOpenViewModal(true)
    }
 
    const onEdit = (id) => {
-      setId(id)
-      setType('edit')
-      handleShow()
+      setCurrentWorkerId(id)
+      setOpenEditModal(true)
    }
 
    const onDelete = (id) => {
-      setId(id)
+      setCurrentWorkerId(id)
       setShowDeleteModal(true)
    }
 
    const onRegister = () => {
-      setType('store')
-      handleShow()
-   }
-
-   const hanldeViewClose = () => {
-      setShow(false)
-   }
-
-   const hanldeChangeClose = () => {
-      if (type === 'edit' || type === 'store' || type === 'delete') executeFunction()
-      setShow(false)
+      setOpenStoreModal(true)
    }
 
    const onCancel = () => setShowDeleteModal(false)
 
-   const onConfirm = async () => {
-      try {
-         await workerService.delete(id)
-         executeFunction()
-         setShowDeleteModal(false)
-         toast.success('Trabajador borrado correctamente')
-      } catch (error) {
-         toast.error('Error al eliminar trabajador')
-      }
-   } 
+   const onConfirm = tryCatch(async () => {
+      await workerService.delete(currentWorkerId)
+      executeFunction()
+      setShowDeleteModal(false)
+      toast.success('Trabajador borrado correctamente')
+   })
+
+   useEffect(() => {
+      if (errorMessage) toast.success(errorMessage)
+   }, [errorMessage])
 
    return (
       <>
@@ -96,11 +87,11 @@ export const IndexPage = () => {
                   <TableFooter total={pager.total} perPage={pager.perPage} page={page} displayedCount={data.length} setPage={setPage} />
                </Card.Body>
             </Card>
-            {type === 'view' && <ViewModal id={id} show={show} handleClose={hanldeViewClose} />}
-            {type === 'edit' && <EditModal id={id} show={show} handleClose={hanldeChangeClose} />}
-            {type === 'store' && <StoreModal show={show} handleClose={hanldeChangeClose} />}
+            <ViewModal openViewModal={openViewModal} setOpenViewModal={setOpenViewModal} />
+            <EditModal openEditModal={openEditModal} setOpenEditModal={setOpenEditModal} executeFunction={executeFunction} />
+            <StoreModal openStoreModal={openStoreModal} setOpenStoreModal={setOpenStoreModal} executeFunction={executeFunction} />
          </ContentLayout>
-         <Popconfirm show={showDeleteModal} setShow={setShowDeleteModal} title={`Eliminar trabajador #${id}`} description={`¿Esta seguro de eliminar el registro?`} onConfirm={onConfirm} onCancel={onCancel}/>
+         <Popconfirm show={showDeleteModal} setShow={setShowDeleteModal} title={`Eliminar trabajador #${currentWorkerId}`} description={`¿Esta seguro de eliminar el registro?`} onConfirm={onConfirm} onCancel={onCancel} />
       </>
    )
 }

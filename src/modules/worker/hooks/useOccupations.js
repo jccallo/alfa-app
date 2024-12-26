@@ -1,21 +1,14 @@
-import { useState } from 'react'
-import toast from 'react-hot-toast'
-import { Api } from '../../../http'
+import { occupationService } from '../../../services'
+import { useIndexStore } from '../store'
 
 export const useOccupations = () => {
-   const [occupations, setOccupations] = useState([])
+   const { setOcupationsState } = useIndexStore()
 
-   const getOccupations = async () => {
-      try {
-         const response = await Api.get(`/occupations?page=1&per_page=1000`)
-         setOccupations(response.data.data)
-      } catch (err) {
-         toast.error('Error al obtener ocupaciones')
-      }
+   const getAllOccupations = async () => {
+      await occupationService.index({ page: 1, per_page: 1000 }).then((response) => setOcupationsState(response.data.data))
    }
 
    return {
-      occupations,
-      getOccupations,
+      getAllOccupations,
    }
 }
