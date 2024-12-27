@@ -3,10 +3,14 @@ import { useWorkers } from '../hooks'
 import { Button, Col, Form, Image, Modal, Row } from 'react-bootstrap'
 import { API_URL } from '../../../constants'
 import { useIndexStore } from '../store'
+import { useHttpStore } from '../../../store'
 
 export const ViewModal = ({ openViewModal, setOpenViewModal }) => {
+   // hook
+   const { tryCatch } = useHttpStore()
+
    // stores
-   const { currentWorkerId, workerState } = useIndexStore()
+   const { currentWorkerId, workerState, resetState } = useIndexStore()
 
    // hooks
    const { getWorkerById } = useWorkers()
@@ -14,12 +18,19 @@ export const ViewModal = ({ openViewModal, setOpenViewModal }) => {
    // memos
    const imgUrl = useMemo(() => (workerState.foto ? `${API_URL}/images/avatars/${workerState.foto}` : '/src/assets/img/no-avatar.png'), [workerState.foto])
 
+   // promesas
+   const execute = tryCatch(async () => {
+      await getWorkerById(currentWorkerId)
+   })
+
    // effects
    useEffect(() => {
-      if (openViewModal && currentWorkerId > 0) {
-         getWorkerById(currentWorkerId)
+      if (openViewModal) {
+         if (currentWorkerId > 0) execute()
+      } else {
+         resetState()
       }
-   }, [currentWorkerId])
+   }, [openViewModal])
 
    return (
       <Modal size="lg" show={openViewModal} onHide={() => setOpenViewModal(false)} backdrop="static" keyboard={false}>

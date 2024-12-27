@@ -1,3 +1,5 @@
 export { calculateAge } from './calculateAge'
 export { calculateDaysBetweenDates } from './calculateDaysBetweenDates'
+export { generateImagePreview } from './generateImagePreview'
+export { generateNumber } from './generateNumber'
 export { getYearMonthAndDay } from './getYearMonthAndDay'

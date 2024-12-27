@@ -5,18 +5,18 @@ import axios from 'axios'
 // Primero, definimos el store
 export const useHttpStore = create((set, get) => ({
    // states
-   isFetching      : false,
-   token           : '',
-   http            : null,
-   errorMessage    : '',
+   isFetching: false,
+   token: '',
+   http: null,
+   errorMessage: '',
    validationErrors: null,
    // actions
-   startFetching      : () => set({ isFetching: true }),
-   stopFetching       : () => set({ isFetching: false }),
-   setErrorMessage    : (message) => set({ errorMessage: message }),
+   startFetching: () => set({ isFetching: true }),
+   stopFetching: () => set({ isFetching: false }),
+   setErrorMessage: (message) => set({ errorMessage: message }),
    setValidationErrors: (errors) => set({ validationErrors: errors }),
-   tryCatch           : null,
-   toFormData         : null,
+   tryCatch: null,
+   toFormData: null,
 
    // resets
    resetErrors: () => set({ errorMessage: '', validationErrors: null }),
@@ -89,12 +89,14 @@ function toFormData(obj, form = new FormData(), parentKey = '') {
          let formKey = parentKey ? `${parentKey}[${key}]` : key
 
          // Si el valor es null, lo omitimos
-         if (prop === null) continue
+         if (prop === null || (Array.isArray(prop) && prop.length === 0)) continue
 
-         // Si el valor es un objeto o un array, lo convertimos a cadena
-         if (prop instanceof File || prop instanceof Blob) {
-            // Si es un archivo o imagen, lo agregamos directamente
-            form.append(formKey, prop);
+         // Si la propiedad es un array de archivos (por ejemplo, imágenes múltiples)
+         if (Array.isArray(prop) && prop.every((item) => item instanceof File || item instanceof Blob)) {
+            // Si es un array de archivos o imágenes, agregamos cada uno al FormData
+            prop.forEach((file) => {
+               form.append(`${formKey}[]`, file)
+            })
          } else if (typeof prop === 'object' && prop !== null) {
             // Convertimos a cadena JSON para anidamientos
             form.append(formKey, JSON.stringify(prop))

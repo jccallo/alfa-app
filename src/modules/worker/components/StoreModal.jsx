@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useImageUpload, useOccupations, useWorkers, useWorksites } from '../hooks'
+import { useOccupations, useWorkers, useWorksites } from '../hooks'
 import { Button, Col, Form, Image, Modal, Row } from 'react-bootstrap'
 import { InvalidFeedback } from '../../../lib/easy'
 import { useHttpStore } from '../../../store'
@@ -7,6 +7,7 @@ import { useIndexStore } from '../store'
 import { useForm } from '../../../hooks'
 import toast from 'react-hot-toast'
 
+// constantes
 const initialForm = {
    codigo: '',
    apellidos_nombres: '',
@@ -15,6 +16,7 @@ const initialForm = {
    fecha_ingreso: '',
    occupation_id: '',
    worksite_id: '',
+   images: [],
 }
 
 export const StoreModal = ({ openStoreModal, setOpenStoreModal, executeFunction }) => {
@@ -24,7 +26,6 @@ export const StoreModal = ({ openStoreModal, setOpenStoreModal, executeFunction 
    // stores
    const { tryCatch, validationErrors, errorMessage, resetErrors } = useHttpStore()
    const { occupationsState, worksitesState } = useIndexStore()
-   const { preview, selectedFile, setPreview, setSelectedFile, handleFileChange } = useImageUpload()
 
    // hooks
    const { getAllOccupations } = useOccupations()
@@ -32,20 +33,13 @@ export const StoreModal = ({ openStoreModal, setOpenStoreModal, executeFunction 
    const { storeWorker } = useWorkers()
 
    // forms
-   const { formState: storeForm, onInputChange, onResetForm } = useForm(initialForm)
-
-   const imgUrl = useMemo(() => {
-      if (preview) return preview
-      else return '/src/assets/img/no-avatar.png'
-   }, [preview])
+   const { formState: storeForm, previews, onInputChange, onResetForm, onResetPreviews } = useForm(initialForm)
 
    // promises
    const handleSubmit = tryCatch(async () => {
-      await storeWorker(storeForm, selectedFile)
-      setPreview(null)
-      setSelectedFile(null)
+      await storeWorker(storeForm)
       setDataIsStored(true)
-      onResetForm()
+      setOpenStoreModal(false)
       toast.success('Trabajador registrado correctamente')
    })
 
@@ -54,25 +48,29 @@ export const StoreModal = ({ openStoreModal, setOpenStoreModal, executeFunction 
       await getAllWorksites()
    })
 
-   // functions
-   const handleClose = () => {
-      if (dataIsStored) executeFunction()
-      setPreview(null)
-      resetErrors()
-      setOpenStoreModal(false)
-   }
+   // memos
+   const imgUrl = useMemo(() => {
+      if (previews.images) return previews.images[0]
+      else return '/src/assets/img/no-avatar.png'
+   }, [previews.images])
 
    // effects
    useEffect(() => {
-      execute()
-   }, [])
+      if (openStoreModal) execute()
+      else {
+         if (dataIsStored) executeFunction()
+         onResetPreviews()
+         resetErrors()
+         onResetForm()
+      }
+   }, [openStoreModal])
 
    useEffect(() => {
-      if (openStoreModal) toast.success(errorMessage)
+      if (openStoreModal && errorMessage) toast.error(errorMessage)
    }, [errorMessage])
 
    return (
-      <Modal size="lg" show={openStoreModal} onHide={handleClose} backdrop="static" keyboard={false}>
+      <Modal size="lg" show={openStoreModal} onHide={() => setOpenStoreModal(false)} backdrop="static" keyboard={false}>
          <Modal.Header closeButton>
             <Modal.Title>Registrar Trabajador</Modal.Title>
          </Modal.Header>
@@ -143,18 +141,21 @@ export const StoreModal = ({ openStoreModal, setOpenStoreModal, executeFunction 
 
                <Form.Group className="mb-3">
                   <Form.Label>Imagen de Perfil</Form.Label>
-                  <Form.Control type="file" accept="image/*" onChange={handleFileChange} />
+                  <Form.Control type="file" name="images" accept="image/*" onChange={onInputChange} />
                </Form.Group>
             </Form>
          </Modal.Body>
          <Modal.Footer>
-            <Button variant="secondary" onClick={handleClose}>
+            <Button variant="secondary" onClick={() => setOpenStoreModal(false)}>
                Cancelar
             </Button>
             <Button variant="primary" onClick={handleSubmit}>
                Guardar
             </Button>
          </Modal.Footer>
+         {/* {previews.images ? <img src={previews.images[0]} style={{ width: 100, height: 100 }} /> : <img src={'/src/assets/img/no-avatar.png'} style={{ width: 100, height: 100 }} />}
+         <pre>{JSON.stringify(previews.images, null, 2)}</pre>
+         <pre>{JSON.stringify(storeForm, null, 2)}</pre> */}
       </Modal>
    )
 }

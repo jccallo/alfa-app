@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useImageUpload, useOccupations, useWorkers, useWorksites } from '../hooks'
+import { useOccupations, useWorkers, useWorksites } from '../hooks'
 import { Button, Col, Form, Image, Modal, Row } from 'react-bootstrap'
 import { InvalidFeedback } from '../../../lib/easy'
 import { useIndexStore } from '../store'
@@ -9,13 +9,15 @@ import toast from 'react-hot-toast'
 import { useHttpStore } from '../../../store'
 
 const initialForm = {
-   codigo: '',
+   id               : '',
+   codigo           : '',
    apellidos_nombres: '',
-   dni: '',
-   fecha_nacimiento: '',
-   fecha_ingreso: '',
-   occupation_id: '',
-   worksite_id: '',
+   dni              : '',
+   fecha_nacimiento : '',
+   fecha_ingreso    : '',
+   occupation_id    : '',
+   worksite_id      : '',
+   images           : [],
 }
 
 export const EditModal = ({ openEditModal, setOpenEditModal, executeFunction }) => {
@@ -27,25 +29,24 @@ export const EditModal = ({ openEditModal, setOpenEditModal, executeFunction }) 
    const { currentWorkerId, occupationsState, worksitesState, workerState, resetState } = useIndexStore()
    
    // hooks
-   const { preview, selectedFile, setSelectedFile, handleFileChange } = useImageUpload()
    const { getAllOccupations }                               = useOccupations()
    const { getAllWorksites }                                 = useWorksites()
    const { editWorker, getWorkerById }                       = useWorkers()
 
    // forms
-   const { formState: editForm, onUpdateForm, onInputChange } = useForm(initialForm)
+   const { formState: editForm, previews, onUpdateForm, onInputChange, onResetForm, onResetPreviews } = useForm(initialForm)
 
    // memos
    const imgUrl = useMemo(() => {
-      if (selectedFile) return preview
+      if (previews.images) return previews.images[0]
       else if (workerState.foto) return `${API_URL}/images/avatars/${workerState.foto}`
       else return '/src/assets/img/no-avatar.png'
-   }, [workerState.foto, preview])
+   }, [workerState.foto, previews.images])
 
    // promises
    const handle = tryCatch(async () => {
-      await editWorker(currentWorkerId, editForm, selectedFile)
-      setSelectedFile(null)
+      await editWorker(currentWorkerId, editForm)
+      onUpdateForm({ images: [] })
       setDataIsUpdated(true)
       toast.success('Trabajor editado correctamente')
    })
@@ -56,23 +57,22 @@ export const EditModal = ({ openEditModal, setOpenEditModal, executeFunction }) 
       await getWorkerById(currentWorkerId)
    })
 
-   // functions
-   const handleClose = () => {
-      if (dataIsUpdated) executeFunction()
-      resetState()
-      resetErrors()
-      setOpenEditModal(false)
-   }
-
    // effects
    useEffect(() => {
-      if (openEditModal && currentWorkerId > 0) {
-         execute()
+      if (openEditModal) {
+         if (currentWorkerId > 0) execute()
       }
-   }, [currentWorkerId])
+      else {
+         if (dataIsUpdated) executeFunction()
+         onResetPreviews()
+         onResetForm()
+         resetState()
+         resetErrors()
+      }
+   }, [openEditModal])
 
    useEffect(() => {
-      if (openEditModal) toast.success(errorMessage)
+      if (openEditModal && errorMessage) toast.error(errorMessage)
    }, [errorMessage])
 
    useEffect(() => {
@@ -91,7 +91,7 @@ export const EditModal = ({ openEditModal, setOpenEditModal, executeFunction }) 
    }, [workerState])
 
    return (
-      <Modal size="lg" show={openEditModal} onHide={handleClose} backdrop="static" keyboard={false}>
+      <Modal size="lg" show={openEditModal} onHide={() => setOpenEditModal(false)} backdrop="static" keyboard={false}>
          <Modal.Header closeButton>
             <Modal.Title>Editar Trabajador #{currentWorkerId}</Modal.Title>
          </Modal.Header>
@@ -162,21 +162,20 @@ export const EditModal = ({ openEditModal, setOpenEditModal, executeFunction }) 
 
                <Form.Group className="mb-3">
                   <Form.Label>Imagen de Perfil</Form.Label>
-                  <Form.Control type="file" accept="image/*" onChange={handleFileChange} />
+                  <Form.Control type="file" accept="image/*" name="images" onChange={onInputChange} />
                </Form.Group>
             </Form>
          </Modal.Body>
          <Modal.Footer>
-            <Button variant="secondary" onClick={handleClose}>
+            <Button variant="secondary" onClick={() => setOpenEditModal(false)}>
                Cancelar
             </Button>
             <Button variant="primary" onClick={handle}>
                Guardar
             </Button>
          </Modal.Footer>
-         {/* <pre>{JSON.stringify({ validationErrors, errorMessage }, null, 2)}</pre>
-         <pre>{JSON.stringify(editForm, null, 2)}</pre>
-         <pre>{JSON.stringify(occupationsState, null, 2)}</pre> */}
+         {/* <pre>{JSON.stringify(previews, null, 2)}</pre>
+         <pre>{JSON.stringify(editForm, null, 2)}</pre> */}
       </Modal>
    )
 }

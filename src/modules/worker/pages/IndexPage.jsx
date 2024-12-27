@@ -7,6 +7,7 @@ import { EditModal, StoreModal, ViewModal } from '../components'
 import { workerService } from '../../../services'
 import { useIndexStore } from '../store'
 import { useHttpStore } from '../../../store'
+import { calculateAge } from '../../../utils'
 
 export const IndexPage = () => {
    const { http, tryCatch, errorMessage } = useHttpStore()
@@ -58,8 +59,14 @@ export const IndexPage = () => {
       toast.success('Trabajador borrado correctamente')
    })
 
+   // memos
+   const edad = (fecha_nacimiento) => {
+      const age = calculateAge(fecha_nacimiento)
+      return age.years === 0 ? '' : `${age.years} ${age.years === 1 ? 'año' : 'años'}`
+   }
+
    useEffect(() => {
-      if (errorMessage) toast.success(errorMessage)
+      if (showDeleteModal && errorMessage) toast.success(errorMessage)
    }, [errorMessage])
 
    return (
@@ -80,7 +87,7 @@ export const IndexPage = () => {
                               <TableCol>{worker.codigo}</TableCol>
                               <TableCol>{worker.apellidos_nombres}</TableCol>
                               <TableCol>{worker.dni}</TableCol>
-                              <TableCol>{worker.fecha_nacimiento}</TableCol>
+                              <TableCol>{edad(worker.fecha_nacimiento)}</TableCol>
                            </TableRow>
                         ))}
                   </TableContent>
