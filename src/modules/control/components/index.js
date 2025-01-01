@@ -1,3 +1,5 @@
-export { WorkerFormCard } from './WorkerFormCard';
-export { WorkerSearchCard } from './WorkerSearchCard';
-export { WorkerSearchModal } from './WorkerSearchModal';
+export { CareHistoryModal } from './CareHistoryModal'
+export { TreatedWorkersModal } from './TreatedWorkersModal'
+export { WorkerFormCard } from './WorkerFormCard'
+export { WorkerSearchCard } from './WorkerSearchCard'
+export { WorkerSearchModal } from './WorkerSearchModal'

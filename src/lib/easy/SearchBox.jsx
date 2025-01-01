@@ -1,9 +1,7 @@
-import { Form } from 'react-bootstrap'
-
 export const SearchBox = ({ searchQuery, onSearchChange }) => {
    const handleSearchChange = (event) => {
       onSearchChange(event.target.value)
    }
 
-   return <Form.Control type="text" size="sm" placeholder="Buscar..." value={searchQuery} onChange={handleSearchChange} />
+   return <input type="search" className="form-control form-control-sm" placeholder="Buscar..." value={searchQuery} onChange={handleSearchChange} />
 }

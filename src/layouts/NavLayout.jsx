@@ -8,7 +8,7 @@ export const NavLayout = () => {
                </ul> {/*end::Start Navbar Links*/} {/*begin::End Navbar Links*/}
                <ul className="navbar-nav ms-auto"> {/*begin::Navbar Search*/}
                   <li className="nav-item user-menu">
-                     <img src="/src/assets/img/avatar5.png" className="user-image rounded-circle shadow" alt="User Image" /> <span className="d-none d-md-inline">Juan Neyra</span>
+                     <img src="./assets/img/avatar5.png" className="user-image rounded-circle shadow" alt="User Image" /> <span className="d-none d-md-inline">Juan Neyra</span>
                   </li> {/*end::User Menu Dropdown*/}
                </ul> {/*end::End Navbar Links*/}
             </div> {/*end::Container*/}

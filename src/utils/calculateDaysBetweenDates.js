@@ -11,7 +11,7 @@ export const calculateDaysBetweenDates = (startDate, endDate) => {
    const differenceInMilliseconds = date2 - date1
 
    // Convert the difference to days
-   const differenceInDays = differenceInMilliseconds / (1000 * 60 * 60 * 24)
+   const differenceInDays = differenceInMilliseconds / (1000 * 60 * 60 * 24) + 1
 
    return Math.abs(differenceInDays) // Absolute value to handle reversed date order
 }

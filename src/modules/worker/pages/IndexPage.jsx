@@ -7,7 +7,7 @@ import { EditModal, StoreModal, ViewModal } from '../components'
 import { workerService } from '../../../services'
 import { useIndexStore } from '../store'
 import { useHttpStore } from '../../../store'
-import { calculateAge } from '../../../utils'
+import { calculateYearsMonthsDays } from '../../../utils'
 
 export const IndexPage = () => {
    const { http, tryCatch, errorMessage } = useHttpStore()
@@ -61,7 +61,7 @@ export const IndexPage = () => {
 
    // memos
    const edad = (fecha_nacimiento) => {
-      const age = calculateAge(fecha_nacimiento)
+      const age = calculateYearsMonthsDays(fecha_nacimiento)
       return age.years === 0 ? '' : `${age.years} ${age.years === 1 ? 'año' : 'años'}`
    }
 

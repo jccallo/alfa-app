@@ -1,1 +1,2 @@
-export { useForm } from './useForm';
+export { useForm } from './useForm'
+export { useTable } from './useTable'

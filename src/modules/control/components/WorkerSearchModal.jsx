@@ -3,7 +3,7 @@ import { TableCol, TableContent, TableFooter, TableHeader, TableRow, useTable } 
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { Api } from '../../../http'
-import { calculateAge } from '../../../utils'
+import { calculateYearsMonthsDays } from '../../../utils'
 
 // constantes
 const columns = ['ID', 'Codigo', 'Apellidos y Nombres', 'DNI', 'Edad', 'Accion']
@@ -40,7 +40,7 @@ export const WorkerSearchModal = ({ show, handleClose, searchWorker, setSearchWo
    }
 
    const calculateWorkerAge = (fechaNacimiento) => {
-      const age = calculateAge(fechaNacimiento)
+      const age = calculateYearsMonthsDays(fechaNacimiento)
       return age.years === 0 ? '' : `${age.years} ${age.years === 1 ? 'año' : 'años'}`
    }
 

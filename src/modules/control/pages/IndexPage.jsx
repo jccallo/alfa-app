@@ -1,4 +1,4 @@
-import { Card } from 'react-bootstrap'
+import { Card, Col, Row } from 'react-bootstrap'
 import { ContentLayout } from '../../../layouts'
 import { Popconfirm, TableCol, TableContent, TableFooter, TableHeader, TableRow, useTable } from '../../../lib/easy'
 import toast from 'react-hot-toast'
@@ -6,10 +6,15 @@ import { Api } from '../../../http'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { medicalCareService } from '../../../services'
+import { CareHistoryModal, TreatedWorkersModal } from '../components'
 
-const columns = ['ID', 'Codigo', 'Apellidos y Nombres', 'DNI', 'Transferido', 'Nro. Documento', 'Fecha Inicio', 'Total Dias', 'Acciones']
+const columns = ['ID', 'Codigo', 'Apellidos y Nombres', 'DNI', 'Nro. Documento', 'Fecha Inicio', 'Fecha Final', 'Total Dias', 'Acciones']
 
 export const IndexPage = () => {
+   // states
+   const [openTreatedWorkersModal, setOpenTreatedWorkersModal] = useState(false)
+   const [openCareHistoryModal, setOpenCareHistoryModal] = useState(false)
+
    const [show, setShow] = useState(false)
    const [currentId, setCurrentId] = useState('')
    const [data, setData] = useState([])
@@ -39,7 +44,7 @@ export const IndexPage = () => {
       setShow(true)
       setCurrentId(id)
    }
-   
+
    // methods
    const onConfirm = async () => {
       try {
@@ -50,17 +55,31 @@ export const IndexPage = () => {
       } catch (error) {
          toast.error('Error al eliminar control médico')
       }
-   } 
+   }
 
    return (
       <>
-         <ContentLayout title="Controles Médico">
+         <ContentLayout title="Controles Médicos">
             <Card className="mb-4">
                <Card.Body>
                   <TableHeader perPage={perPage} query={query} setPerPage={setPerPage} setQuery={setQuery}>
-                     <button className="btn btn-primary btn-sm" onClick={onRegister}>
-                        Registrar
-                     </button>
+                     <Row className="g-3 align-items-center">
+                        <Col xs="auto">
+                           <button className="btn btn-outline-danger btn-sm" onClick={() => setOpenTreatedWorkersModal(true)}>
+                              <i className="bi bi-clipboard2-pulse"></i> Atenciones
+                           </button>
+                        </Col>
+                        <Col xs="auto">
+                           <button className="btn btn-outline-secondary btn-sm" onClick={() => setOpenCareHistoryModal(true)}>
+                              <i className="bi bi-journal-text"></i> Historial
+                           </button>
+                        </Col>
+                        <Col>
+                           <button className="btn btn-primary btn-sm" onClick={onRegister}>
+                              Registrar
+                           </button>
+                        </Col>
+                     </Row>
                   </TableHeader>
                   <TableContent columns={columns}>
                      {data.length > 0 &&
@@ -70,9 +89,9 @@ export const IndexPage = () => {
                               <TableCol>{control.codigo}</TableCol>
                               <TableCol>{control.apellidos_nombres}</TableCol>
                               <TableCol>{control.dni}</TableCol>
-                              <TableCol>{control.transferencia === '1' ? 'SI' : 'NO'}</TableCol>
                               <TableCol>{control.nro_documento}</TableCol>
                               <TableCol>{control.fecha_inicio}</TableCol>
+                              <TableCol>{control.fecha_final}</TableCol>
                               <TableCol>{control.total_dias}</TableCol>
                            </TableRow>
                         ))}
@@ -81,7 +100,9 @@ export const IndexPage = () => {
                </Card.Body>
             </Card>
          </ContentLayout>
-         <Popconfirm show={show} setShow={setShow} title="Eliminar" description={`¿Esta seguro de eliminar el registro #${currentId}?`} onConfirm={onConfirm} onCancel={onCancel}/>
+         <Popconfirm show={show} setShow={setShow} title="Eliminar" description={`¿Esta seguro de eliminar el registro #${currentId}?`} onConfirm={onConfirm} onCancel={onCancel} />
+         <CareHistoryModal openCareHistoryModal={openCareHistoryModal} setOpenCareHistoryModal={setOpenCareHistoryModal} />
+         <TreatedWorkersModal openTreatedWorkersModal={openTreatedWorkersModal} setOpenTreatedWorkersModal={setOpenTreatedWorkersModal} />
       </>
    )
 }

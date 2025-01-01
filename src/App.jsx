@@ -1,5 +1,5 @@
 import LoadingBar from 'react-top-loading-bar'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Link, Navigate, Route, Routes } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { useEffect, useRef } from 'react'
 
@@ -27,7 +27,7 @@ function App() {
             <Route path="auth/*" element={<AuthLayout />}>
                <Route path="*" element={<AuthRoutes />} />
             </Route>
-            <Route path="app/*" element={<MainLayout />}>
+            <Route path="*" element={<MainLayout />}>
                <Route path="controls/*" element={<ControlRoutes />} />
                <Route path="workers/*" element={<WorkerRoutes />} />
                <Route path="*" element={<Navigate to="controls" replace />} />

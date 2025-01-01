@@ -1,4 +1,4 @@
-export { calculateAge } from './calculateAge'
+export { calculateYearsMonthsDays } from './calculateYearsMonthsDays'
 export { calculateDaysBetweenDates } from './calculateDaysBetweenDates'
 export { generateImagePreview } from './generateImagePreview'
 export { generateNumber } from './generateNumber'
